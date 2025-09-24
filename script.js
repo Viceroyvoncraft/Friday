@@ -26,6 +26,15 @@ function invokeTask(columnId) {
         // Cuando el botón es clicado, elimina el elemento padre (la tarea)
         taskList.removeChild(newTask);
     });
+    
+    // NUEVA LÓGICA: Eventos de Arrastre
+    newTask.addEventListener('dragstart', () => {
+        newTask.classList.add('is-dragging');
+    });
+
+    newTask.addEventListener('dragend', () => {
+        newTask.classList.remove('is-dragging');
+    });
 }
 
 // Escuchador de eventos para el botón de "Invocar Tarea"
@@ -33,4 +42,22 @@ const addButton = document.querySelector('.add-task-btn');
 
 addButton.addEventListener('click', () => {
     invokeTask('pending-column');
+});
+
+// NUEVA LÓGICA: Arrastrar y Soltar en las Columnas
+const statusColumns = document.querySelectorAll('.status-column');
+
+statusColumns.forEach(column => {
+    const taskList = column.querySelector('.task-list');
+
+    // Escucha cuando un elemento arrastrado entra sobre la columna
+    column.addEventListener('dragover', e => {
+        e.preventDefault(); // Permite soltar elementos aquí
+    });
+
+    // Escucha cuando un elemento es soltado en la columna
+    column.addEventListener('drop', e => {
+        const draggedTask = document.querySelector('.is-dragging');
+        taskList.appendChild(draggedTask);
+    });
 });
