@@ -8,7 +8,6 @@ function invokeTask(columnId) {
     newTask.classList.add('task-card');
     
     // 3. Define el contenido de la nueva tarea
-    // Por ahora, será un simple texto. Más adelante, podremos hacer que el usuario lo ingrese.
     newTask.innerHTML = `
         <p>Nueva Tarea</p>
         <button class="delete-btn">Eliminar</button>
@@ -16,14 +15,21 @@ function invokeTask(columnId) {
 
     // 4. Adjunta la nueva tarea a la lista de tareas en la columna
     taskList.appendChild(newTask);
+
+    // 5. INFUNDE LÓGICA DE ELIMINACIÓN
+    // Selecciona el botón de "Eliminar" dentro de la nueva tarea
+    const deleteButton = newTask.querySelector('.delete-btn');
+
+    // Agrega un "listener" que escuche el evento 'click' en el botón de eliminar
+    deleteButton.addEventListener('click', () => {
+        // Cuando el botón es clicado, elimina el elemento padre (la tarea)
+        taskList.removeChild(newTask);
+    });
 }
 
 // Escuchador de eventos para el botón de "Invocar Tarea"
-// 1. Selecciona el botón por su clase
 const addButton = document.querySelector('.add-task-btn');
 
-// 2. Agrega un "listener" que escucha el evento 'click'
 addButton.addEventListener('click', () => {
-    // Cuando el botón es clicado, invoca la función para la columna de "Pendiente"
     invokeTask('pending-column');
 });
