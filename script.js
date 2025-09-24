@@ -12,6 +12,7 @@ function invokeTask(columnId) {
         <p>Nueva Tarea</p>
         <button class="delete-btn">Eliminar</button>
     `;
+    newTask.setAttribute('draggable', 'true'); //draggable attribute
 
     // 4. Adjunta la nueva tarea a la lista de tareas en la columna
     taskList.appendChild(newTask);
