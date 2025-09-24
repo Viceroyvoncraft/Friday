@@ -61,6 +61,13 @@ h1 {
     background-color: #34495e;
 }
 
+/* Nuevo estilo para la tarea cuando está siendo arrastrada */
+.is-dragging {
+    opacity: 0.5;
+    transform: scale(0.95);
+    border: 2px dashed #34495e;
+}
+
 /* Contenedor de Tareas */
 .task-list {
     min-height: 100px; /* Para que las columnas mantengan su forma incluso sin tareas */
