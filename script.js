@@ -35,7 +35,6 @@ function invokeTask(columnId) {
     newTask.addEventListener('dragend', () => {
         newTask.classList.remove('is-dragging');
     });
-}
 
 // Escuchador de eventos para el botón de "Invocar Tarea"
 const addButton = document.querySelector('.add-task-btn');
@@ -61,3 +60,4 @@ statusColumns.forEach(column => {
         taskList.appendChild(draggedTask);
     });
 });
+}
