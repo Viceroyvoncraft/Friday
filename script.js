@@ -1,69 +1,96 @@
+// Variable para almacenar la tarea que se está arrastrando
+let draggedTask = null;
+
 // La sagrada función que invoca una nueva tarea
-function invokeTask(columnId) {
-    // 1. Localiza el contenedor de la lista de tareas
+function invokeTask(columnId, taskText = 'Nueva Tarea', taskId = Date.now()) {
+    // 1. Crear el objeto de la tarea para la memoria
+    const taskData = {
+        id: taskId,
+        text: taskText,
+        status: columnId.replace('-column', '') // 'pending', 'in-progress', 'completed'
+    };
+
     const taskList = document.querySelector(`#${columnId} .task-list`);
-    
-    // 2. Crea un nuevo elemento div que representará la tarea
     const newTask = document.createElement('div');
     newTask.classList.add('task-card');
+    newTask.setAttribute('draggable', 'true');
+    newTask.setAttribute('data-task-id', taskId); // Guarda el ID en el elemento DOM
     
-    // 3. Define el contenido de la nueva tarea
     newTask.innerHTML = `
-        <p>Nueva Tarea</p>
+        <p>${taskText}</p>
         <button class="delete-btn">Eliminar</button>
     `;
-    newTask.setAttribute('draggable', 'true'); //draggable attribute
 
-    // 4. Adjunta la nueva tarea a la lista de tareas en la columna
     taskList.appendChild(newTask);
 
-    // 5. INFUNDE LÓGICA DE ELIMINACIÓN
-    // Selecciona el botón de "Eliminar" dentro de la nueva tarea
-    const deleteButton = newTask.querySelector('.delete-btn');
-
-    // Agrega un "listener" que escuche el evento 'click' en el botón de eliminar
-    deleteButton.addEventListener('click', () => {
-        // Cuando el botón es clicado, elimina el elemento padre (la tarea)
-        taskList.removeChild(newTask);
-    });
-    
-    // NUEVA LÓGICA: Eventos de Arrastre
+    // Lógica para marcar la tarea al arrastrar (debe mantenerse igual)
+    // ... (restablece los listeners dragstart y dragend de newTask)
     newTask.addEventListener('dragstart', () => {
-        newTask.classList.add('is-dragging');
+        draggedTask = newTask;
+        setTimeout(() => newTask.classList.add('is-dragging'), 0);
     });
 
     newTask.addEventListener('dragend', () => {
+        draggedTask = null;
         newTask.classList.remove('is-dragging');
+        saveTasksToLocalStorage(); // NUEVO: Guarda el estado después de mover
     });
+    
+    // NUEVO: Guarda inmediatamente al crear la tarea
+    saveTasksToLocalStorage();
 }
-// Escuchador de eventos para el botón de "Invocar Tarea"
-const addButton = document.querySelector('.add-task-btn');
 
+// Modificar el botón para usar el valor por defecto
+const addButton = document.querySelector('.add-task-btn');
 addButton.addEventListener('click', () => {
-    invokeTask('pending-column');
+    // Por ahora, solo invocamos con valores por defecto.
+    invokeTask('pending-column'); 
 });
 
-// NUEVA LÓGICA: Arrastrar y Soltar en las Columnas
+// Delegación de Eventos para el botón de "Eliminar" (Lógica de Purificación)
+document.addEventListener('click', e => {
+    if (e.target.classList.contains('delete-btn')) {
+        const taskCard = e.target.closest('.task-card');
+        if (taskCard) {
+            const taskId = taskCard.getAttribute('data-task-id');
+            taskCard.remove();
+            
+            // NUEVO: Purgar de la memoria sagrada
+            let tasks = getTasksFromLocalStorage();
+            tasks = tasks.filter(task => task.id != taskId);
+            localStorage.setItem('mechanicusTasks', JSON.stringify(tasks));
+        }
+    }
+});
+
+// LÓGICA DE DRAG AND DROP CORREGIDA
 const statusColumns = document.querySelectorAll('.status-column');
 
 statusColumns.forEach(column => {
-    // Escucha cuando un elemento arrastrado entra sobre la columna
+    const taskList = column.querySelector('.task-list');
+
+    // 1. dragover: SOLO permite soltar, no hace la inserción todavía
     column.addEventListener('dragover', e => {
-        e.preventDefault(); // Permite soltar elementos aquí
-        // Lógica para encontrar el elemento más cercano
-        const afterElement = getDragAfterElement(column, e.clientY);
-        const draggedTask = document.querySelector('.is-dragging');
-        if (afterElement == null) {
-            column.querySelector('.task-list').appendChild(draggedTask);
-        } else {
-            column.querySelector('.task-list').insertBefore(draggedTask, afterElement);
-        }
+        e.preventDefault();
+        // Opcional: Puedes usar 'dragover' para indicar visualmente dónde caerá
     });
 
-    // Eliminamos el evento 'drop' porque la lógica de inserción ahora está en 'dragover'
+    // 2. drop: Inserta la tarea en la posición precisa
+    column.addEventListener('drop', e => {
+        e.preventDefault();
+        if (!draggedTask) return; // Asegura que realmente estamos arrastrando una tarea
+
+        const afterElement = getDragAfterElement(column, e.clientY);
+        
+        if (afterElement == null) {
+            taskList.appendChild(draggedTask);
+        } else {
+            taskList.insertBefore(draggedTask, afterElement);
+        }
+    });
 });
 
-// NUEVA FUNCIÓN SAGRADA: Encuentra el elemento más cercano para soltar
+// FUNCIÓN SAGRADA: Encuentra el elemento más cercano para soltar (sin cambios)
 function getDragAfterElement(column, y) {
     const draggableTasks = [...column.querySelectorAll('.task-card:not(.is-dragging)')];
 
@@ -77,3 +104,36 @@ function getDragAfterElement(column, y) {
         }
     }, { offset: Number.NEGATIVE_INFINITY }).element;
 }
+
+// FUNCIÓN SAGRADA: Recuperar conocimiento de la memoria
+function getTasksFromLocalStorage() {
+    const tasks = localStorage.getItem('mechanicusTasks');
+    return tasks ? JSON.parse(tasks) : [];
+}
+
+// FUNCIÓN SAGRADA: Guardar estado actual en la memoria
+function saveTasksToLocalStorage() {
+    const allTasks = [];
+    document.querySelectorAll('.task-card').forEach(taskElement => {
+        const column = taskElement.closest('.status-column');
+        
+        allTasks.push({
+            id: Number(taskElement.getAttribute('data-task-id')),
+            text: taskElement.querySelector('p').textContent, // Asume que el texto está en el primer <p>
+            status: column.id.replace('-column', '')
+        });
+    });
+    localStorage.setItem('mechanicusTasks', JSON.stringify(allTasks));
+}
+
+// FUNCIÓN SAGRADA: Cargar tareas al inicio del ritual
+function loadTasks() {
+    const tasks = getTasksFromLocalStorage();
+    tasks.forEach(task => {
+        // Invoca la tarea utilizando los datos recuperados de la memoria
+        invokeTask(`${task.status}-column`, task.text, task.id);
+    });
+}
+
+// Llamada inicial para cargar el conocimiento al iniciar el script
+loadTasks();
