@@ -1,7 +1,21 @@
 import React from "react";
+import { Draggable } from "react-beautiful-dnd";
 
-function Task({ title }) {
-  return <div className="task">{title}</div>;
+function Task({ id, index, title }) {
+  return (
+    <Draggable draggableId={id} index={index}>
+      {(provided) => (
+        <div
+          className="task"
+          {...provided.draggableProps}
+          {...provided.dragHandleProps}
+          ref={provided.innerRef}
+        >
+          {title}
+        </div>
+      )}
+    </Draggable>
+  );
 }
 
 export default Task;
